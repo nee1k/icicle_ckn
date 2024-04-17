@@ -7,26 +7,24 @@ from random import uniform, randint
 from confluent_kafka import Producer
 from confluent_kafka.admin import AdminClient, NewTopic
 
+
+def delivery_callback(err, msg):
+    if err:
+        print('ERROR: Message failed delivery: {}'.format(err))
+    else:
+        print('\nProduced Topic: {}'.format(msg.topic()))
+        pprint(data)
+
+
 if __name__ == '__main__':
+
     config = {"bootstrap.servers": "localhost:9092"}
-
-    # Create Producer instance
     producer = Producer(config)
-
-
-    def delivery_callback(err, msg):
-        if err:
-            print('ERROR: Message failed delivery: {}'.format(err))
-        else:
-            print('\nProduced Topic: {}'.format(msg.topic()))
-            pprint(data)
-
-
     admin_client = AdminClient(config)
 
-    topic_list = [NewTopic("request-raw", 1, 1),
-                  NewTopic("request-agg", 1, 1),
-                  NewTopic("accuracy-alerts", 1, 1)]
+    topic_list = [NewTopic("request-raw"),
+                  NewTopic("request-agg"),
+                  NewTopic("accuracy-alerts")]
     admin_client.create_topics(topic_list)
 
     data_entries = []
@@ -35,13 +33,11 @@ if __name__ == '__main__':
     start_time = tm.time()
     while tm.time() - start_time < 100:
         current_time = tm.time() - start_time
-        cycle_index = int(current_time // 10) % len(mean_accuracies)  # Calculate the current cycle index
+        cycle_index = int(current_time // 10) % len(mean_accuracies)
         mean_acc = mean_accuracies[cycle_index]
 
-        # Adjust accuracy to fluctuate around the mean (mean_acc)
         pred_accuracy = uniform(mean_acc - 0.1, mean_acc + 0.1)
         added_time = datetime.now()
-        # data_entries.append((pred_accuracy, added_time))
 
         data = {
             'server_id': 'server-1',
@@ -59,7 +55,7 @@ if __name__ == '__main__':
             'added_time': added_time.strftime("%d-%m-%Y %H:%M:%S.%f")[:-3]
         }
 
-        producer.produce("accuracy-raw", json.dumps(data), data['server_id'], callback=delivery_callback)
+        producer.produce("request-raw", json.dumps(data), data['server_id'], callback=delivery_callback)
         producer.poll(0)  # Serve delivery callback
         tm.sleep(0.5)  # Adjust sleep time as needed to simulate production rate
 
