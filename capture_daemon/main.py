@@ -1,33 +1,19 @@
 #!/usr/bin/env python
 import json
 import time as tm
-from argparse import ArgumentParser, FileType
-from configparser import ConfigParser
 from datetime import datetime
 from pprint import pprint
 from random import uniform, randint
-import matplotlib.pyplot as plt
 from confluent_kafka import Producer
+from confluent_kafka.admin import AdminClient, NewTopic
 
 if __name__ == '__main__':
-    # Parse the command line.
-    parser = ArgumentParser()
-    parser.add_argument('config_file', type=FileType('r'))
-    args = parser.parse_args()
-
-    # Parse the configuration.
-    # See https://github.com/edenhill/librdkafka/blob/master/CONFIGURATION.md
-    config_parser = ConfigParser()
-    config_parser.read_file(args.config_file)
-    config = dict(config_parser['default'])
+    config = {"bootstrap.servers": "localhost:9092"}
 
     # Create Producer instance
     producer = Producer(config)
 
 
-    # Optional per-message delivery callback (triggered by poll() or flush())
-    # when a message has been successfully delivered or permanently
-    # failed delivery (after retries).
     def delivery_callback(err, msg):
         if err:
             print('ERROR: Message failed delivery: {}'.format(err))
@@ -36,7 +22,13 @@ if __name__ == '__main__':
             pprint(data)
 
 
-    topic = "accuracy-raw"
+    admin_client = AdminClient(config)
+
+    topic_list = [NewTopic("request-raw", 1, 1),
+                  NewTopic("request-agg", 1, 1),
+                  NewTopic("accuracy-alerts", 1, 1)]
+    admin_client.create_topics(topic_list)
+
     data_entries = []
     mean_accuracies = [0.7, 0.3, 0.5, 0.8, 0.2]
 
@@ -49,7 +41,7 @@ if __name__ == '__main__':
         # Adjust accuracy to fluctuate around the mean (mean_acc)
         pred_accuracy = uniform(mean_acc - 0.1, mean_acc + 0.1)
         added_time = datetime.now()
-        data_entries.append((pred_accuracy, added_time))
+        # data_entries.append((pred_accuracy, added_time))
 
         data = {
             'server_id': 'server-1',
@@ -67,22 +59,22 @@ if __name__ == '__main__':
             'added_time': added_time.strftime("%d-%m-%Y %H:%M:%S.%f")[:-3]
         }
 
-        producer.produce(topic, json.dumps(data), data['server_id'], callback=delivery_callback)
+        producer.produce("accuracy-raw", json.dumps(data), data['server_id'], callback=delivery_callback)
         producer.poll(0)  # Serve delivery callback
-        tm.sleep(0.1)  # Adjust sleep time as needed to simulate production rate
+        tm.sleep(0.5)  # Adjust sleep time as needed to simulate production rate
 
     # Block until all messages are sent
     producer.poll(10000)
     producer.flush()
 
-    times = [entry[1] for entry in data_entries]
-    accuracies = [entry[0] for entry in data_entries]
-    plt.figure(figsize=(12, 6))
-    plt.plot(times, accuracies, marker='o', linestyle='-', color='b')
-    plt.title('Prediction Accuracy Over Time')
-    plt.xlabel('Time')
-    plt.ylabel('Prediction Accuracy')
-    plt.xticks(rotation=45)
-    plt.tight_layout()
-    plt.grid(True)
-    plt.show()
+    # times = [entry[1] for entry in data_entries]
+    # accuracies = [entry[0] for entry in data_entries]
+    # plt.figure(figsize=(12, 6))
+    # plt.plot(times, accuracies, marker='o', linestyle='-', color='b')
+    # plt.title('Prediction Accuracy Over Time')
+    # plt.xlabel('Time')
+    # plt.ylabel('Prediction Accuracy')
+    # plt.xticks(rotation=45)
+    # plt.tight_layout()
+    # plt.grid(True)
+    # plt.show()
