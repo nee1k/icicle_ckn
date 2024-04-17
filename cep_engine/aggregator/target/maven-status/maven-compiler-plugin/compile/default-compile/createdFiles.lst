@@ -1,0 +1,15 @@
+org/d2i/ckn/model/qoe/CountSumAggregator.class
+org/d2i/ckn/model/power/EventTimeExtractor.class
+org/d2i/ckn/model/power/AggregatedPowerEvent.class
+org/d2i/ckn/model/power/PowerEvent.class
+org/d2i/ckn/model/qoe/AverageAggregator.class
+org/d2i/ckn/model/power/PowerEvent$PowerEventBuilder.class
+org/d2i/ckn/StreamProcessorQoE.class
+org/d2i/ckn/model/qoe/EventTimeExtractor.class
+org/d2i/ckn/model/power/CountSumAggregator.class
+org/d2i/ckn/model/JsonSerde.class
+org/d2i/ckn/model/qoe/QoEEvent.class
+org/d2i/ckn/model/qoe/InferenceEvent.class
+org/d2i/ckn/model/EdgeEvent.class
+org/d2i/ckn/model/qoe/QoEEvent$QoEEventBuilder.class
+org/d2i/ckn/model/qoe/InferenceEvent$InferenceEventBuilder.class
