@@ -24,7 +24,8 @@ if __name__ == '__main__':
 
     topic_list = [NewTopic("request-raw"),
                   NewTopic("request-agg"),
-                  NewTopic("accuracy-alerts")]
+                  NewTopic("alerts-raw"),
+                  NewTopic("alerts-agg")]
     admin_client.create_topics(topic_list)
 
     data_entries = []
